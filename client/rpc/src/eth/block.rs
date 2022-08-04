@@ -32,7 +32,7 @@ use fc_rpc_core::types::*;
 use fp_rpc::EthereumRuntimeRPCApi;
 
 use crate::{
-	eth::{rich_block_build, Eth, EthConfig},
+	eth::{empty_block_from, rich_block_build, Eth, EthConfig},
 	frontier_backend_client, internal_err,
 };
 
@@ -149,7 +149,7 @@ where
 					statuses.into_iter().map(Option::Some).collect(),
 					Some(hash),
 					full,
-					base_fee,
+					Some(base_fee),
 				);
 				// Indexers heavily rely on the parent hash.
 				// Moonbase client-level patch for inconsistent runtime 1200 state.
@@ -173,7 +173,22 @@ where
 				}
 				Ok(Some(rich_block))
 			}
-			_ => Ok(None),
+			_ => {
+				if let BlockNumber::Num(block_number) = number {
+					let eth_block = empty_block_from(block_number.into());
+					let eth_hash =
+						H256::from_slice(keccak_256(&rlp::encode(&eth_block.header)).as_slice());
+					Ok(Some(rich_block_build(
+						eth_block,
+						Default::default(),
+						Some(eth_hash),
+						full,
+						None,
+					)))
+				} else {
+					Ok(None)
+				}
+			}
 		}
 	}
 
