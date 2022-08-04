@@ -15,8 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::Arc;
-
 use clap::Parser;
 use fc_db::frontier_database_dir;
 use frame_benchmarking_cli::BenchmarkCmd;
@@ -27,7 +25,7 @@ use sc_service::{DatabaseSource, PartialComponents};
 use crate::{
 	chain_spec,
 	cli::{Cli, Subcommand},
-	command_helper::{inherent_benchmark_data, BenchmarkExtrinsicBuilder},
+	command_helper::{inherent_benchmark_data, RemarkBuilder},
 	service::{self, db_config_dir},
 };
 
@@ -193,19 +191,16 @@ pub fn run() -> sc_cli::Result<()> {
 						cmd.run(config, client, db, storage)
 					}
 					BenchmarkCmd::Overhead(cmd) => {
-						let ext_builder = BenchmarkExtrinsicBuilder::new(client.clone());
+						let ext_builder = RemarkBuilder::new(client.clone());
 
-						cmd.run(
-							config,
-							client,
-							inherent_benchmark_data()?,
-							Arc::new(ext_builder),
-						)
+						cmd.run(config, client, inherent_benchmark_data()?, &ext_builder)
 					}
 					BenchmarkCmd::Machine(cmd) => cmd.run(
 						&config,
 						frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE.clone(),
 					),
+					// We don't need it atm, it will be added later
+					BenchmarkCmd::Extrinsic(_) => Err("Benchmark extrinsic not supported.".into()),
 				}
 			})
 		}
