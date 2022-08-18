@@ -30,6 +30,8 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT};
 
 use fc_rpc_core::types::*;
 
+use log::debug;
+
 use crate::{
 	eth::{empty_block_from, rich_block_build, Eth},
 	frontier_backend_client, internal_err,
@@ -51,24 +53,43 @@ where
 		let id = match frontier_backend_client::load_hash::<B>(backend.as_ref(), hash)
 			.map_err(|err| internal_err(format!("{:?}", err)))?
 		{
-			Some(hash) => hash,
-			_ => return Ok(None),
+			Some(hash) => {
+				debug!(target: "block_by_hash", "load_hash result is Some - {:?}", hash);
+				hash
+			},
+			_ => {
+				debug!(target: "block_by_hash", "load_hash result is None");
+				return Ok(None)
+			},
 		};
+
+		debug!(target: "block_by_hash", "Passing load_hash. id - {}", id);
+
 		let substrate_hash = client
 			.expect_block_hash_from_id(&id)
 			.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
 
+		debug!(target: "block_by_hash", "Passing expect_block_hash_from_id. substrate_hash - {}", substrate_hash);
+
 		let schema =
 			frontier_backend_client::onchain_storage_schema::<B, C, BE>(client.as_ref(), id);
+
+		debug!(target: "block_by_hash", "Passing expect_block_hash_from_id. schema - {:?}", schema);
+
 		let handler = overrides
 			.schemas
 			.get(&schema)
 			.unwrap_or(&overrides.fallback);
 
 		let block = block_data_cache.current_block(schema, substrate_hash).await;
+
+		debug!(target: "block_by_hash", "block - {:?}", block);
+
 		let statuses = block_data_cache
 			.current_transaction_statuses(schema, substrate_hash)
 			.await;
+
+		debug!(target: "block_by_hash", "statuses - {:?}", statuses);
 
 		let base_fee = handler.base_fee(&id);
 
