@@ -94,14 +94,21 @@ where
 		let base_fee = handler.base_fee(&id);
 
 		match (block, statuses) {
-			(Some(block), Some(statuses)) => Ok(Some(rich_block_build(
-				block,
-				statuses.into_iter().map(Option::Some).collect(),
-				Some(hash),
-				full,
-				base_fee,
-			))),
-			_ => Ok(None),
+			(Some(block), Some(statuses)) => {
+				debug!(target: "block_by_hash", "matched to Some(block), Some(statuses)");
+
+				Ok(Some(rich_block_build(
+					block,
+					statuses.into_iter().map(Option::Some).collect(),
+					Some(hash),
+					full,
+					base_fee,
+				)))
+			},
+			_ => {
+				debug!(target: "block_by_hash", "matched to others");
+				Ok(None)
+			},
 		}
 	}
 
