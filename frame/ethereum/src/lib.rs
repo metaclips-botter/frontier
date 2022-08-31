@@ -229,7 +229,7 @@ pub mod pallet {
 					let r = Self::apply_validated_transaction(source, transaction)
 						.expect("pre-block apply transaction failed; the block cannot be built");
 
-					weight = weight.saturating_add(r.actual_weight.unwrap_or(0));
+					weight = weight.saturating_add(r.actual_weight.unwrap_or(Weight::zero()));
 				}
 			}
 			// Account for `on_finalize` weight:
@@ -246,7 +246,7 @@ pub mod pallet {
 				&EthereumStorageSchema::V3,
 			);
 
-			T::DbWeight::get().write
+			T::DbWeight::get().writes(1)
 		}
 	}
 
@@ -780,7 +780,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn migrate_block_v0_to_v2() -> Weight {
 		let db_weights = T::DbWeight::get();
-		let mut weight: Weight = db_weights.read;
+		let mut weight: Weight = db_weights.reads(1);
 		let item = b"CurrentBlock";
 		let block_v0 = frame_support::storage::migration::get_storage_value::<ethereum::BlockV0>(
 			Self::name().as_bytes(),
@@ -788,7 +788,7 @@ impl<T: Config> Pallet<T> {
 			&[],
 		);
 		if let Some(block_v0) = block_v0 {
-			weight = weight.saturating_add(db_weights.write);
+			weight = weight.saturating_add(db_weights.writes(1));
 			let block_v2: ethereum::BlockV2 = block_v0.into();
 			frame_support::storage::migration::put_storage_value::<ethereum::BlockV2>(
 				Self::name().as_bytes(),

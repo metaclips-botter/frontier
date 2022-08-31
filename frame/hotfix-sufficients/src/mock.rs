@@ -15,7 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use frame_support::{parameter_types, traits::ConstU32};
+use frame_support::{parameter_types, traits::ConstU32, weights::Weight};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -49,7 +49,7 @@ type Block = frame_system::mocking::MockBlock<Test>;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(1024);
+		frame_system::limits::BlockWeights::simple_max(Weight::from_ref_time(1024));
 }
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;

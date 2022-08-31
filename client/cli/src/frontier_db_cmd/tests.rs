@@ -93,8 +93,8 @@ mod tests {
 				detailed_log_output: false,
 			},
 			pruning_params: sc_cli::PruningParams {
-				pruning: None,
-				keep_blocks: None,
+				state_pruning: None,
+				blocks_pruning: None,
 			},
 		}
 	}
