@@ -98,6 +98,8 @@ where
 			)
 		};
 
+		log::info("ETH_CALL DEBUG: Gas price: {:?},  max fee per gas: {:?}, max prio fee per gas: {:?}", gas_price, max_fee_per_gas, max_priority_fee_per_gas);
+
 		let (id, api) = match frontier_backend_client::native_block_id::<B, C>(
 			self.client.as_ref(),
 			self.backend.as_ref(),
@@ -122,6 +124,8 @@ where
 			} else {
 				return Err(internal_err("failed to retrieve Runtime Api version"));
 			};
+
+		log::info("ETH_CALL DEBUG: api version: {:?}", api_version);
 
 		let block = if api_version > 1 {
 			api.current_block(&id)
@@ -153,6 +157,8 @@ where
 			}
 			None => max_gas_limit,
 		};
+
+		log::info("ETH_CALL DEBUG: gas_limit after adjustment: {:?}" gas_limit);
 
 		let data = data.map(|d| d.0).unwrap_or_default();
 		match to {
