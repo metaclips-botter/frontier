@@ -127,6 +127,7 @@ where
 		if let Some(checking_header) =
 			fetch_header(substrate_backend, frontier_backend, checking_tip, sync_from)?
 		{
+			log::debug!(target: "mapping-sync-ct", "fetch_header Some {:?} - {:?}", checking_tip, &checking_header.number());
 			operating_header = Some(checking_header);
 			break;
 		} else {
