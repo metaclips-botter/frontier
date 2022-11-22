@@ -208,14 +208,18 @@ where
 	B: sp_blockchain::HeaderBackend<Block> + sp_blockchain::Backend<Block>,
 {
 	if frontier_backend.mapping().is_synced(&checking_tip)? {
+		log::debug!(target: "mapping-sync-fh", "fetch_header is_synced false {:?}", checking_tip);
 		return Ok(None);
 	}
 
-	match substrate_backend.header(BlockId::Hash(checking_tip)) {
+	match substrate_backend.header(BlockId::Hash(checking_tip.clone())) {
 		Ok(Some(checking_header)) if checking_header.number() >= &sync_from => {
 			Ok(Some(checking_header))
 		}
-		Ok(Some(_)) => Ok(None),
+		Ok(Some(_)) => {
+			log::debug!(target: "mapping-sync-fh", "here {:?}", checking_tip);
+			Ok(None)
+		},
 		Ok(None) | Err(_) => Err("Header not found".to_string()),
 	}
 }
