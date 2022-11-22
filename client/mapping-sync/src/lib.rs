@@ -122,11 +122,15 @@ where
 
 	let mut operating_header = None;
 	while let Some(checking_tip) = current_syncing_tips.pop() {
+		log::debug!(target: "mapping-sync-ct", "Checking tip {:?}", checking_tip);
+
 		if let Some(checking_header) =
 			fetch_header(substrate_backend, frontier_backend, checking_tip, sync_from)?
 		{
 			operating_header = Some(checking_header);
 			break;
+		} else {
+			log::debug!(target: "mapping-sync-ct", "fetch_header None {:?}", checking_tip);
 		}
 	}
 	let operating_header = match operating_header {
@@ -139,7 +143,7 @@ where
 		}
 	};
 
-	log::debug!(target: "mapping-sync", "Operationing header {:?}", operating_header.number());
+	log::debug!(target: "mapping-sync-oh", "Operationing header {:?}", operating_header.number());
 
 	if operating_header.number() == &Zero::zero() {
 		sync_genesis_block(client, frontier_backend, &operating_header)?;
