@@ -139,6 +139,8 @@ where
 		}
 	};
 
+	log::debug!(target: "mapping-sync", "Operationing header {:?}", operating_header.number());
+
 	if operating_header.number() == &Zero::zero() {
 		sync_genesis_block(client, frontier_backend, &operating_header)?;
 

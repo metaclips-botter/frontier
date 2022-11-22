@@ -115,6 +115,11 @@ where
 		&mut self,
 		block: BlockCheckParams<B>,
 	) -> Result<ImportResult, Self::Error> {
+		log::debug!(
+			target: "genesis-debug",
+			"check block header {:?}",
+			block.hash
+		);
 		self.inner.check_block(block).await.map_err(Into::into)
 	}
 
@@ -126,7 +131,18 @@ where
 		// We validate that there are only one frontier log. No other
 		// actions are needed and mapping syncing is delegated to a separate
 		// worker.
+		log::debug!(
+			target: "genesis-debug",
+			"import block header {:?}",
+			block.header.number()
+		);
+
 		ensure_log(block.header.digest()).map_err(Error::from)?;
+
+		log::debug!(
+			target: "genesis-debug",
+			"ensure_log succeeded",
+		);
 
 		self.inner
 			.import_block(block, new_cache)

@@ -48,16 +48,49 @@ where
 		let block_data_cache = Arc::clone(&self.block_data_cache);
 		let backend = Arc::clone(&self.backend);
 
+		log::debug!(
+			target: "genesis-debug",
+			"Hash {:?}",
+			hash,
+		);
+
 		let id = match frontier_backend_client::load_hash::<B, C>(
 			client.as_ref(),
 			backend.as_ref(),
 			hash,
 		)
-		.map_err(|err| internal_err(format!("{:?}", err)))?
+		.map_err(|err| {
+			log::error!(
+				target: "genesis-debug",
+				"load_hash error {:?}",
+				err
+			);
+
+			internal_err(format!("{:?}", err))
+		})?
 		{
-			Some(hash) => hash,
-			_ => return Ok(None),
+			Some(hash) => {
+				log::debug!(
+					target: "genesis-debug",
+					"Some(hash)",
+				);
+				hash
+			},
+			_ => {
+				log::debug!(
+					target: "genesis-debug",
+					"None",
+				);
+				return Ok(None)
+			},
 		};
+
+		log::debug!(
+			target: "genesis-debug",
+			"ID {:?}",
+			id
+		);
+
 		let substrate_hash = client
 			.expect_block_hash_from_id(&id)
 			.map_err(|_| internal_err(format!("Expect block number from id: {}", id)))?;
