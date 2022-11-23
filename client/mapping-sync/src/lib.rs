@@ -73,38 +73,35 @@ where
 
 	let id = BlockId::Hash(header.hash());
 
-	let has_api = client
+	if let Some(api_version) = client
 		.runtime_api()
-		.has_api::<dyn EthereumRuntimeRPCApi<Block>>(&id)
-		.map_err(|e| format!("{:?}", e))?;
-
-	log::debug!(target: "mapping-sync-sg", "has_api? {}", has_api);
-
-	// if has_api {
-	log::debug!(target: "mapping-sync-sg", "Sync genesis passed 1");
-	let block = client
-		.runtime_api()
-		.current_block(&id)
-		.map_err(|e| format!("{:?}", e))?;
-	log::debug!(target: "mapping-sync-sg", "Sync genesis passed 2");
-	let block_hash = block
-		.ok_or_else(|| "Ethereum genesis block not found".to_string())?
-		.header
-		.hash();
-	log::debug!(target: "mapping-sync-sg", "Sync genesis passed 3");
-	let mapping_commitment = fc_db::MappingCommitment::<Block> {
-		block_hash: header.hash(),
-		ethereum_block_hash: block_hash,
-		ethereum_transaction_hashes: Vec::new(),
+		.api_version::<dyn EthereumRuntimeRPCApi<Block>>(&id)
+		.map_err(|e| format!("{:?}", e))?
+	{
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 1, API_VERSION {:?}", api_version);
+		let block = client
+			.runtime_api()
+			.current_block(&id)
+			.map_err(|e| format!("{:?}", e))?;
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 2");
+		let block_hash = block
+			.ok_or_else(|| "Ethereum genesis block not found".to_string())?
+			.header
+			.hash();
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 3");
+		let mapping_commitment = fc_db::MappingCommitment::<Block> {
+			block_hash: header.hash(),
+			ethereum_block_hash: block_hash,
+			ethereum_transaction_hashes: Vec::new(),
+		};
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 4");
+		backend.mapping().write_hashes(mapping_commitment)?;
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 5");
+	} else {
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 1");
+		backend.mapping().write_none(header.hash())?;
+		log::debug!(target: "mapping-sync-sg", "Sync genesis passed 2");
 	};
-	log::debug!(target: "mapping-sync-sg", "Sync genesis passed 4");
-	backend.mapping().write_hashes(mapping_commitment)?;
-	log::debug!(target: "mapping-sync-sg", "Sync genesis passed 5");
-	// } else {
-		// log::debug!(target: "mapping-sync-sg", "Sync genesis passed 1");
-		// backend.mapping().write_none(header.hash())?;
-		// log::debug!(target: "mapping-sync-sg", "Sync genesis passed 2");
-	// }
 
 	Ok(())
 }
