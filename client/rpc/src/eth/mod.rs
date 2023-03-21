@@ -517,7 +517,7 @@ where
 	// In case of Pending, we need an overlayed state to query over.
 	let api = client.runtime_api();
 	let best_hash = client.info().best_hash;
-	let best = BlockId::Hash(client.info().best_hash);
+	let best = BlockId::Hash(best_hash);
 	// Get all transactions in the ready queue.
 	let xts: Vec<<B as BlockT>::Extrinsic> = graph
 		.validated_pool()

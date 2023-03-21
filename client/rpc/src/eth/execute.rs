@@ -112,11 +112,9 @@ where
 			}
 		};
 
-		if let Err(sp_blockchain::Error::UnknownBlock(_)) =
-			self.client.expect_block_hash_from_id(&id)
-		{
+		let Ok(_hash) = self.client.expect_block_hash_from_id(&id) else {
 			return Err(crate::err(JSON_RPC_ERROR_DEFAULT, "header not found", None));
-		}
+		};
 
 		let api_version =
 			if let Ok(Some(api_version)) = api.api_version::<dyn EthereumRuntimeRPCApi<B>>(&id) {
