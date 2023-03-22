@@ -136,10 +136,7 @@ where
 			.current_transaction_statuses(schema, substrate_hash)
 			.await;
 
-		let base_fee = client
-			.runtime_api()
-			.gas_price(substrate_hash)
-			.unwrap_or_default();
+		let base_fee = client.runtime_api().gas_price(substrate_hash).ok();
 
 		match (block, statuses) {
 			(Some(block), Some(statuses)) => {
