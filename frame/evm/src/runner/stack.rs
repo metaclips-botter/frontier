@@ -130,7 +130,7 @@ where
 			>,
 		) -> (ExitReason, R),
 	{
-        // Only check the restrictions of EIP-3607 if the source of the EVM operation is from an external transaction.
+		// Only check the restrictions of EIP-3607 if the source of the EVM operation is from an external transaction.
 		// If the source of this EVM operation is from an internal call, like from `eth_call` or `eth_estimateGas` RPC,
 		// we will skip the checks for the EIP-3607.
 		if is_transactional {

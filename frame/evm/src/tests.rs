@@ -572,8 +572,8 @@ fn eip3607_transaction_from_contract_should_fail() {
 			None,
 			None,
 			Vec::new(),
-			true,   // transactional
-			false,  // must not be validated
+			true,  // transactional
+			false, // must not be validated
 			&<Test as Config>::config().clone(),
 		) {
 			Err(RunnerError {
@@ -622,8 +622,8 @@ fn eip3607_transaction_from_precompile_should_fail() {
 			None,
 			None,
 			Vec::new(),
-			true,   // transactional
-			false,  // must not be validated
+			true,  // transactional
+			false, // must not be validated
 			&<Test as Config>::config().clone(),
 		) {
 			Err(RunnerError {
