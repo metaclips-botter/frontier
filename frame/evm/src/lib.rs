@@ -730,6 +730,12 @@ impl<T: Config> Pallet<T> {
 			return;
 		}
 
+		log::warn!(
+			target: "runtime",
+			"FIREHOSE: create_account {:?}",
+			address,
+		);
+
 		if !<AccountCodes<T>>::contains_key(address) {
 			let account_id = T::AddressMapping::into_account_id(address);
 			let _ = frame_system::Pallet::<T>::inc_sufficients(&account_id);
