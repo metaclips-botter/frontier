@@ -1,0 +1,16 @@
+[package]
+description = "OpenEthereum Deep Mind Implementations"
+name = "deepmind"
+version = "0.0.1"
+authors = ["dfuse Developers <developers@dfuse.io>"]
+edition = "2018"
+
+[dependencies]
+ethereum-types = "0.9.0"
+rustc-hex = "2.1.0"
+serde = "1.0"
+serde_json = "1.0"
+
+
+[features]
+default = []

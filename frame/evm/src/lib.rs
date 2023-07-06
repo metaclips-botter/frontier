@@ -183,6 +183,12 @@ pub mod pallet {
 			let destination = T::WithdrawOrigin::ensure_address_origin(&address, origin)?;
 			let address_account_id = T::AddressMapping::into_account_id(address);
 
+			log::trace!(
+				target: "runtime",
+				"FIREHOSE: transfer {:?} {:?}",
+				address, value
+			);
+
 			T::Currency::transfer(
 				&address_account_id,
 				&destination,
@@ -212,6 +218,12 @@ pub mod pallet {
 			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
+
+			log::trace!(
+				target: "runtime",
+				"FIREHOSE: call {:?} {:?}",
+				source, gas_limit
+			);
 
 			let is_transactional = true;
 			let validate = true;
@@ -278,6 +290,12 @@ pub mod pallet {
 			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
+
+			log::trace!(
+				target: "runtime",
+				"FIREHOSE: create {:?} {:?}",
+				source, gas_limit
+			);
 
 			let is_transactional = true;
 			let validate = true;
@@ -358,6 +376,11 @@ pub mod pallet {
 
 			let is_transactional = true;
 			let validate = true;
+			log::trace!(
+				target: "runtime",
+				"FIREHOSE: create2 {:?} {:?}",
+				source, gas_limit
+			);
 			let info = match T::Runner::create2(
 				source,
 				init,
@@ -730,7 +753,7 @@ impl<T: Config> Pallet<T> {
 			return;
 		}
 
-		log::warn!(
+		log::trace!(
 			target: "runtime",
 			"FIREHOSE: create_account {:?}",
 			address,
