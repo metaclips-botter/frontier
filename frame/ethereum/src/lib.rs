@@ -45,7 +45,9 @@ use fp_evm::{
 use fp_storage::{EthereumStorageSchema, PALLET_ETHEREUM_SCHEMA};
 use frame_support::{
 	codec::{Decode, Encode, MaxEncodedLen},
-	dispatch::{DispatchInfo, DispatchResultWithPostInfo, Pays, PostDispatchInfo},
+	dispatch::{
+		DispatchErrorWithPostInfo, DispatchInfo, DispatchResultWithPostInfo, Pays, PostDispatchInfo,
+	},
 	scale_info::TypeInfo,
 	traits::{EnsureOrigin, Get, PalletInfoAccess, Time},
 	weights::Weight,
@@ -58,7 +60,7 @@ use sp_runtime::{
 	transaction_validity::{
 		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransactionBuilder,
 	},
-	DispatchErrorWithPostInfo, RuntimeDebug, SaturatedConversion,
+	RuntimeDebug, SaturatedConversion,
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -244,7 +246,7 @@ pub mod pallet {
 					Self::validate_transaction_in_block(source, &transaction).expect(
 						"pre-block transaction verification failed; the block cannot be built",
 					);
-					let r = Self::apply_validated_transaction(source, transaction)
+					let (r, _) = Self::apply_validated_transaction(source, transaction)
 						.expect("pre-block apply transaction failed; the block cannot be built");
 
 					weight = weight.saturating_add(r.actual_weight.unwrap_or_default());
@@ -293,7 +295,7 @@ pub mod pallet {
 				"pre log already exists; block is invalid",
 			);
 
-			Self::apply_validated_transaction(source, transaction)
+			Self::apply_validated_transaction(source, transaction).map(|(post_info, _)| post_info)
 		}
 	}
 
@@ -320,7 +322,7 @@ pub mod pallet {
 
 	/// Current building block's transactions and receipts.
 	#[pallet::storage]
-	pub(super) type Pending<T: Config> =
+	pub type Pending<T: Config> =
 		StorageValue<_, Vec<(Transaction, TransactionStatus, Receipt)>, ValueQuery>;
 
 	/// The current Ethereum block.
@@ -536,7 +538,7 @@ impl<T: Config> Pallet<T> {
 	fn apply_validated_transaction(
 		source: H160,
 		transaction: Transaction,
-	) -> DispatchResultWithPostInfo {
+	) -> Result<(PostDispatchInfo, CallOrCreateInfo), DispatchErrorWithPostInfo> {
 		let (to, _, info) = Self::execute(source, &transaction, None)?;
 
 		catch_exec_info::fill_exec_info(&info);
@@ -545,7 +547,7 @@ impl<T: Config> Pallet<T> {
 		let transaction_hash = transaction.hash();
 		let transaction_index = pending.len() as u32;
 
-		let (reason, status, used_gas, dest, extra_data) = match info {
+		let (reason, status, used_gas, dest, extra_data) = match info.clone() {
 			CallOrCreateInfo::Call(info) => (
 				info.exit_reason.clone(),
 				TransactionStatus {
@@ -658,13 +660,16 @@ impl<T: Config> Pallet<T> {
 			extra_data,
 		});
 
-		Ok(PostDispatchInfo {
-			actual_weight: Some(T::GasWeightMapping::gas_to_weight(
-				used_gas.unique_saturated_into(),
-				true,
-			)),
-			pays_fee: Pays::No,
-		})
+		Ok((
+			(PostDispatchInfo {
+				actual_weight: Some(T::GasWeightMapping::gas_to_weight(
+					used_gas.unique_saturated_into(),
+					true,
+				)),
+				pays_fee: Pays::No,
+			}),
+			info,
+		))
 	}
 
 	/// Get current block hash
@@ -677,10 +682,7 @@ impl<T: Config> Pallet<T> {
 		from: H160,
 		transaction: &Transaction,
 		config: Option<evm::Config>,
-	) -> Result<
-		(Option<H160>, Option<H160>, CallOrCreateInfo),
-		DispatchErrorWithPostInfo<PostDispatchInfo>,
-	> {
+	) -> Result<(Option<H160>, Option<H160>, CallOrCreateInfo), DispatchErrorWithPostInfo> {
 		let (
 			input,
 			value,
@@ -903,7 +905,10 @@ impl<T: Config> Pallet<T> {
 
 pub struct ValidatedTransaction<T>(PhantomData<T>);
 impl<T: Config> ValidatedTransactionT for ValidatedTransaction<T> {
-	fn apply(source: H160, transaction: Transaction) -> DispatchResultWithPostInfo {
+	fn apply(
+		source: H160,
+		transaction: Transaction,
+	) -> Result<(PostDispatchInfo, CallOrCreateInfo), DispatchErrorWithPostInfo> {
 		Pallet::<T>::apply_validated_transaction(source, transaction)
 	}
 }
