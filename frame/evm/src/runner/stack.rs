@@ -87,6 +87,12 @@ where
 			});
 		}
 
+		log::debug!(
+			target: "evm",
+			"FIREHOSE: execute {:?} {:?}",
+			source, gas_limit
+		);
+
 		let res = Self::execute_inner(
 			source,
 			value,

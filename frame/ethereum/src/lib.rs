@@ -31,7 +31,9 @@ mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
+mod firehose;
 pub use catch_exec_info::catch_exec_info;
+pub use firehose::{end_block, start_transaction};
 
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
@@ -200,6 +202,8 @@ pub mod pallet {
 		type PostLogContent: Get<PostLogContent>;
 		/// The maximum length of the extra data in the Executed event.
 		type ExtraDataLength: Get<u32>;
+		/// Firehose tracing.
+		type FirehoseTracer: DeepMind;
 	}
 
 	#[pallet::hooks]
@@ -396,7 +400,8 @@ impl<T: Config> Pallet<T> {
 		let mut logs_bloom = Bloom::default();
 		let mut cumulative_gas_used = U256::zero();
 		for (transaction, status, receipt) in Pending::<T>::get() {
-			transactions.push(transaction);
+			transactions.push(transaction.clone());
+			start_transaction(transaction);
 			statuses.push(status);
 			receipts.push(receipt.clone());
 			let (logs, used_gas) = match receipt {
@@ -431,8 +436,13 @@ impl<T: Config> Pallet<T> {
 			mix_hash: H256::default(),
 			nonce: H64::default(),
 		};
-		let block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
+		let block = ethereum::Block::new(partial_header.clone(), transactions.clone(), ommers);
 
+		end_block(
+			block_number,
+			0,
+			partial_header.clone(),
+		);
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts.clone());
 		CurrentTransactionStatuses::<T>::put(statuses.clone());

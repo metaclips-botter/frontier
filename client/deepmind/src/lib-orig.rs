@@ -2,7 +2,6 @@ use std::{fmt, sync::Arc};
 use rustc_hex::ToHex;
 use ethereum_types as eth;
 use serde::{Serialize, Serializer};
-use parity_version::{ to_deepmind_version };
 
 pub static EMPTY_BYTES: [u8; 0] = [];
 pub static PLATFORM: &str = "openethereum";
@@ -596,7 +595,7 @@ impl Context {
     }
 
 	pub fn init(&self, engine: String) {
-		let platform_version = to_deepmind_version();
+		let platform_version = ("0", "0", "1");
 		self.printer.print(format!("INIT {protocol_major} {protocol_minor} {platform} {fork} {platform_major} {platform_minor} {platform_patch} {engine}",
 			protocol_major = PROTOCOL_MAJOR,
 			protocol_minor = PROTOCOL_MINOR,
