@@ -31,8 +31,10 @@ mod mock;
 #[cfg(all(feature = "std", test))]
 mod tests;
 
-mod firehose;
-use crate::firehose::BlockTrait;
+// mod firehose;
+// use crate::firehose::BlockTrait;
+use deepmind::BlockTrait as Firehose;
+
 pub use catch_exec_info::catch_exec_info;
 
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
@@ -215,7 +217,7 @@ pub mod pallet {
 					frame_system::Pallet::<T>::block_number(),
 				)),
 			);
-			firehose::BlockContext::finalize_block(n.unique_saturated_into());
+			<deepmind::BlockContext as Firehose>::finalize_block(n.unique_saturated_into());
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
 			let to_remove = n
@@ -435,7 +437,7 @@ impl<T: Config> Pallet<T> {
 		};
 		let block = ethereum::Block::new(partial_header.clone(), transactions.clone(), ommers);
 
-		firehose::BlockContext::end_block(block_number, 0, partial_header.clone());
+		<deepmind::BlockContext as Firehose>::end_block(block_number, 0, partial_header.clone());
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts.clone());
 		CurrentTransactionStatuses::<T>::put(statuses.clone());
@@ -541,7 +543,7 @@ impl<T: Config> Pallet<T> {
 		transaction: Transaction,
 	) -> DispatchResultWithPostInfo {
 		let (to, _, info) = Self::execute(source, &transaction, None)?;
-		firehose::BlockContext::start_transaction(&transaction, &source, to);
+		<deepmind::BlockContext as Firehose>::start_transaction(&transaction, &source, to);
 
 		catch_exec_info::fill_exec_info(&info);
 

@@ -1,223 +1,131 @@
-use ethereum::{PartialHeader, TransactionAction, TransactionV2 as Transaction};
-use ethereum_types::{Address, H160, H256, U256};
+#![cfg_attr(not(feature = "std"), no_std)]
+
+use ethereum::{PartialHeader, TransactionV2 as Transaction};
+use ethereum_types::{H160, U256};
 use fp_ethereum::TransactionData;
 use frame_support::dispatch::fmt;
 use scale_info::prelude::format;
-use sp_std::sync::Arc;
 // use serde_json_core::ser;
 
-pub static PLATFORM: &str = "Frontier";
-pub static FORK: &str = "vanilla";
+pub trait Tracer: Send {
+	// fn is_enabled() -> bool { false }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Instrumentation {
-	Full,
-	BlockProgress,
-	None,
-}
-pub struct Context {
-	instrumentation: Instrumentation,
-	printer: Arc<Box<dyn Printer>>,
-}
+	// fn start_call(_call: Call) {}
+	// fn reverted_call(_gas_left: &eth::U256) {}
+	// fn failed_call(_gas_left_after_failure: &eth::U256, _err: String) {}
+	// fn end_call(_gas_left: &eth::U256, _return_data: Option<&[u8]>) {}
+	// fn seen_failed_call() -> bool { return false }
+	// fn end_failed_call(_from: &str) {}
 
-pub trait ContextTrait {
-    fn new(instrumentation: Instrumentation) -> Context;
-    fn noop() -> Context;
-    fn is_enabled(&self) -> bool;
-    fn is_finalize_block_enabled(&self) -> bool;
-    fn init(&self, engine: String);
-    fn block_context(&self) -> BlockContextType;
-    fn block_tracer(&self) -> BlockTracer;
-}
+	// fn record_balance_change(_address: &eth::Address, _old: &eth::U256, _new: &eth::U256, _reason: BalanceChangeReason) {}
+	// fn record_nonce_change(_address: &eth::Address, _old: &eth::U256, _new: &eth::U256) {}
+	// fn record_keccak(_hash_of_data: &eth::H256, _data: &[u8]) {}
+	fn record_new_account(_addr: &H160) {}
+	// fn record_suicide(_addr: &eth::Address, _already_suicided: bool, _balance_before_suicide: &eth::U256) {}
+	// fn record_storage_change(_addr: &eth::Address, _key: &eth::H256, _old_data: &eth::H256, _new_data: &eth::H256) {}
+	// fn record_log(_log: Log) {}
+	// fn record_call_without_code(&mut self) {}
 
-impl ContextTrait for Context {
-	fn new(instrumentation: Instrumentation) -> Context {
-		Context {
-			instrumentation,
-			printer: Arc::new(Box::new(IoPrinter {})),
-		}
-	}
-    fn noop() -> Context {
-        Context {
-            instrumentation: Instrumentation::None,
-            printer: Arc::new(Box::new(DiscardPrinter{})),
-        }
-    }
+	// fn record_gas_refund(_gas_old: usize, _gas_refund: usize) {}
+	// fn record_gas_consume(_gas_old: usize, _gas_consumed: usize, _reason: GasChangeReason) {}
+	// fn record_code_change(_addr: &eth::Address, _input_hash: &eth::H256, _code_hash: &eth::H256, _old_code: &[u8], _new_code: &[u8]) {}
+	// fn record_before_call_gas_event(_gas_value: usize) {}
+	// fn record_after_call_gas_event(_gas_value: usize) {}
 
-    fn block_context(&self) -> BlockContextType {
-        BlockContextType {
-            context: *self,
-            is_enabled: self.is_enabled(),
-        }
-    }
+	// Returns the number of Ethereum Log that was performed as part of this tracer
+	// fn get_log_count() -> u64 { return 0 }
 
-    fn block_tracer(&self) -> BlockTracer {
-        BlockTracer{printer: self.printer.clone()}
-    }
-
-    fn is_enabled(&self) -> bool {
-        return self.instrumentation == Instrumentation::Full;
-    }
-
-    fn is_finalize_block_enabled(&self) -> bool {
-        return self.instrumentation == Instrumentation::Full || self.instrumentation == Instrumentation::BlockProgress;
-    }
-
-	fn init(&self, engine: String) {
-		self.printer.print(format!("INIT {protocol_major} {protocol_minor} {platform} {fork} {platform_major} {platform_minor} {platform_patch} {engine}",
-			protocol_major = 0,
-			protocol_minor = 1,
-			platform_major = 5,
-			platform_minor = 11,
-			platform_patch = 0,
-			platform = PLATFORM,
-			fork = FORK,
-			engine = engine,
-		).as_ref())
-	}
-}
-
-pub struct BlockContextType {
-	context: Context,
-	is_enabled: bool,
-	// is_finalize_block_enabled: bool,
-	// cumulative_gas_used: u64,
-	// log_index_at_block: u64,
-}
-
-trait BlockContextTrait {
-    type BlockContext;
-
-    fn is_enabled() -> bool;
-	fn end_block( num: U256, size: u64, header: PartialHeader);
-    fn start_transaction(trx: Transaction);
-}
-
-impl BlockContextTrait for BlockContextType{
-    type BlockContext = BlockContextType;
-
-	fn is_enabled() -> bool {
-		Self::is_enabled()
-	}
-
-	fn end_block(num: U256, size: u64, header: PartialHeader) {
-		Self::context.printer.print(
-            format!(
-                "END_BLOCK {num} {size} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}", 
-                &header.parent_hash,
-                &header.beneficiary,
-                &header.state_root,
-                &header.receipts_root,
-                &header.logs_bloom,
-                &header.difficulty,
-                &header.number,
-                &header.gas_limit,
-                &header.gas_used,
-                &header.timestamp,
-                &header.difficulty,
-                &header.extra_data,
-                &header.mix_hash,
-                &header.nonce,
-            )
-            .as_ref(),
-        );
-	}
-
-	// let tx = TransactionV0 {
-	// 	nonce: 12.into(),
-	// 	gas_price: 20_000_000_000_u64.into(),
-	// 	gas_limit: 21000.into(),
-	// 	action: TransactionAction::Call(
-	// 		hex!("727fc6a68321b754475c668a6abfb6e9e71c169a").into(),
-	// 	),
-	// 	value: U256::from(10) * 1_000_000_000 * 1_000_000_000,
-	// 	input: hex!("a9059cbb000000000213ed0f886efd100b67c7e4ec0a85a7d20dc971600000000000000000000015af1d78b58c4000").into(),
-	// 	signature: TransactionSignature::new(38, hex!("be67e0a07db67da8d446f76add590e54b6e92cb6b8f9835aeb67540579a27717").into(), hex!("2d690516512020171c1ec870f6ff45398cc8609250326be89915fb538e7bd718").into()).unwrap(),
-	// };
-
-	// pub struct EIP2930TransactionMessage {
-	// 	pub chain_id: u64,
-	// 	pub nonce: U256,
-	// 	pub gas_price: U256,
-	// 	pub gas_limit: U256,
-	// 	pub action: TransactionAction,
-	// 	pub value: U256,
-	// 	pub input: Bytes,
-	// 	pub access_list: Vec<AccessListItem>,
-	// }
-
-	// pub struct EIP1559TransactionMessage {
-	// 	pub chain_id: u64,
-	// 	pub nonce: U256,
-	// 	pub max_priority_fee_per_gas: U256,
-	// 	pub max_fee_per_gas: U256,
-	// 	pub gas_limit: U256,
-	// 	pub action: TransactionAction,
-	// 	pub value: U256,
-	// 	pub input: Bytes,
-	// 	pub access_list: Vec<AccessListItem>,
-	// }
-
-	// pub struct TransactionData {
-	// 	pub action: TransactionAction,
-	// 	pub input: Vec<u8>,
-	// 	pub nonce: U256,
-	// 	pub gas_limit: U256,
-	// 	pub gas_price: Option<U256>,
-	// 	pub max_fee_per_gas: Option<U256>,
-	// 	pub max_priority_fee_per_gas: Option<U256>,
-	// 	pub value: U256,
-	// 	pub chain_id: Option<u64>,
-	// 	pub access_list: Vec<(H160, Vec<H256>)>,
-	// }
-
-	fn start_transaction( trx: &Transaction) {
-		let tx_data: TransactionData = (trx).into();
-		Self::BlockContext.context.printer.print(
-            format!("BEGIN_TRX {hash:x} {to} {value:x} {v:x} {r:x} {s:x} {gas_limit} {gas_price:x} {nonce} {data:x}",
-            hash = 0,
-            to = 0,
-            value = tx_data.value,
-            v = 0,
-            r = 0,
-            s = 0,
-            gas_limit = tx_data.gas_limit,
-            gas_price = tx_data.gas_price.unwrap_or_default(),
-            nonce = tx_data.nonce,
-            data = 0,
-        ).as_ref());
-	}
-}
-pub trait Printer: Send + Sync {
-	fn print(&self, _input: &str) {}
-
-	fn debug(&self, _input: &str) {}
-}
-
-pub struct DiscardPrinter {}
-
-impl Printer for DiscardPrinter {}
-
-pub struct IoPrinter {}
-
-impl Printer for IoPrinter {
-	fn print(&self, input: &str) {
-		sp_std::if_std! {
-		println!("DMLOG {}", input);
-		}
-	}
-
-	fn debug(&self, input: &str) {
-		println!("DMDEBUG {}", input);
-	}
+	// Use this to add printing statement useful for debugging, the message is printed with the current
+	// tracer context like active call index and other tracer state information.
+	// fn debug(_message: String) {}
 }
 
 /// BlockTracer is responsible of recording single tracing elements (like Balance or Gas change)
 /// that happens outside of any transactions on a block.
-pub struct BlockTracer {
-    printer: Arc<Box<dyn Printer>>,
+pub struct BlockTracer;
+
+impl Tracer for BlockTracer {
+	fn record_new_account(address: &H160) {
+		print(
+			format!(
+				"CREATED_ACCOUNT {call_index} {address:x}",
+				call_index = 0,
+				address = address,
+			)
+			.as_ref(),
+		);
+	}
 }
 
+pub struct BlockContext;
+
+pub trait BlockTrait {
+	// fn new() -> BlockContext;
+	// fn is_enabled(&self) -> bool;
+	// fn is_finalize_block_enabled(&self) -> bool;
+	// fn start_block(num: u64);
+	// fn transaction_tracer(&self, hash: eth::H256) -> TransactionTracer;
+	fn start_transaction(trx: &Transaction, from: &H160, to: Option<H160>);
+	// fn record_log_count(&mut self, count: u64);
+	// fn get_cumulative_gas_used(&mut self) -> u64;
+	// fn set_cumulative_gas_used(&mut self, gas_used: u64);
+	// fn end_transaction(&mut self, receipt: TransactionReceipt);
+	fn finalize_block(num: u64);
+	// fn end_block(&self, num: u64, size: u64, header:  Header, uncles: Vec<Header>);
+	fn end_block(num: U256, size: u64, header: PartialHeader);
+}
+
+impl BlockTrait for BlockContext {
+	fn end_block(num: U256, size: u64, header: PartialHeader) {
+		print(
+			format!(
+			"END_BLOCK {num} {size} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}", 
+			&header.parent_hash,
+			&header.beneficiary,
+			&header.state_root,
+			&header.receipts_root,
+			&header.logs_bloom,
+			&header.difficulty,
+			&header.number,
+			&header.gas_limit,
+			&header.gas_used,
+			&header.timestamp,
+			&header.difficulty,
+			&header.extra_data,
+			&header.mix_hash,
+			&header.nonce,
+		)
+			.as_ref(),
+		);
+	}
+
+	fn start_transaction(trx: &Transaction, from: &H160, to: Option<H160>) {
+		let tx_data: TransactionData = (trx).into();
+		print(format!("BEGIN_APPLY_TRX {hash:x} {to} {value:x} {v:x} {r:x} {s:x} {gas_limit} {gas_price:x} {nonce} {data:x}",
+		hash = trx.hash(),
+		to = to.unwrap_or(H160::zero()),
+		value = tx_data.value,
+		v = 0,
+		r = 0,
+		s = 0,
+		gas_limit = tx_data.gas_limit,
+		gas_price = tx_data.gas_price.unwrap_or_default(),
+		nonce = tx_data.nonce,
+		data = 0,
+	).as_ref());
+		print(format!("TRX_FROM {from:x}", from = from).as_ref());
+	}
+
+	fn finalize_block(num: u64) {
+		print(format!("FINALIZE_BLOCK {num}", num = num).as_ref())
+	}
+}
+
+pub fn print(input: &str) {
+	sp_std::if_std! {
+	println!("DMLOG {}", input);
+	}
+}
 
 struct UU256<'a>(&'a U256);
 

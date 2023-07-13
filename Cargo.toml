@@ -2,6 +2,7 @@
 members = [
 	"frame/base-fee",
 	"frame/dynamic-fee",
+	"frame/deepmind",
 	"frame/ethereum",
 	"frame/evm",
 	"frame/evm-chain-id",
@@ -162,5 +163,5 @@ ark-ec = { version = "0.4.0", default-features = false }
 ark-ff = { version = "0.4.0", default-features = false }
 ark-std = { version = "0.4.0", default-features = false }
 
-# # Deepmind
-# deepmind = { path = "frame/deepmind"}
+# Deepmind
+deepmind = { path = "frame/deepmind", default-features = false}

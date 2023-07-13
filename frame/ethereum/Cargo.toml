@@ -32,6 +32,8 @@ fp-storage = { workspace = true }
 pallet-evm = { workspace = true }
 # serde_json = { package = "serde_json", version = "1.0.64", workspace = true }
 # serde-json-core = { workspace = true }
+# Deepmind tracer for Firehose
+deepmind = {  workspace = true, features = ["default"] }
 
 [dev-dependencies]
 hex = "0.4.3"
@@ -44,8 +46,7 @@ sp-core = { workspace = true, features = ["default"] }
 # Frontier
 fp-self-contained = { workspace = true, features = ["default"] }
 
-# # Deepmind
-# deepmind = { path = "../deepmind" }
+
 
 [features]
 default = ["std"]
@@ -72,6 +73,7 @@ std = [
 	"fp-storage/std",
 	"pallet-evm/std",
 	# "serde-json-core/std",
+	"deepmind/std",
 ]
 runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",

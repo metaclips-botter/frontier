@@ -16,5 +16,21 @@ frame-support = { workspace = true }
 scale-info = { workspace = true }
 sp-std = { workspace = true }
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [features]
-default = []
+default = ["std"]
+std = [
+	"ethereum-types/std",
+	"rustc-hex/std",
+	"serde/std",
+	"serde_json/std",
+	"ethereum/std",
+	"scale-info/std",
+	# Substrate
+	"frame-support/std",
+	"sp-std/std",
+	# Frontier
+	"fp-ethereum/std",
+]
