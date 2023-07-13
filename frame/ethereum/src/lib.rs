@@ -32,8 +32,8 @@ mod mock;
 mod tests;
 
 mod firehose;
+use crate::firehose::BlockTrait;
 pub use catch_exec_info::catch_exec_info;
-pub use firehose::{end_block, start_transaction};
 
 use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
 use evm::ExitReason;
@@ -184,7 +184,6 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
@@ -202,8 +201,6 @@ pub mod pallet {
 		type PostLogContent: Get<PostLogContent>;
 		/// The maximum length of the extra data in the Executed event.
 		type ExtraDataLength: Get<u32>;
-		/// Firehose tracing.
-		type FirehoseTracer: DeepMind;
 	}
 
 	#[pallet::hooks]
@@ -218,6 +215,7 @@ pub mod pallet {
 					frame_system::Pallet::<T>::block_number(),
 				)),
 			);
+			firehose::BlockContext::finalize_block(n.unique_saturated_into());
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
 			let to_remove = n
@@ -401,7 +399,6 @@ impl<T: Config> Pallet<T> {
 		let mut cumulative_gas_used = U256::zero();
 		for (transaction, status, receipt) in Pending::<T>::get() {
 			transactions.push(transaction.clone());
-			start_transaction(transaction);
 			statuses.push(status);
 			receipts.push(receipt.clone());
 			let (logs, used_gas) = match receipt {
@@ -438,11 +435,7 @@ impl<T: Config> Pallet<T> {
 		};
 		let block = ethereum::Block::new(partial_header.clone(), transactions.clone(), ommers);
 
-		end_block(
-			block_number,
-			0,
-			partial_header.clone(),
-		);
+		firehose::BlockContext::end_block(block_number, 0, partial_header.clone());
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts.clone());
 		CurrentTransactionStatuses::<T>::put(statuses.clone());
@@ -548,6 +541,7 @@ impl<T: Config> Pallet<T> {
 		transaction: Transaction,
 	) -> DispatchResultWithPostInfo {
 		let (to, _, info) = Self::execute(source, &transaction, None)?;
+		firehose::BlockContext::start_transaction(&transaction, &source, to);
 
 		catch_exec_info::fill_exec_info(&info);
 

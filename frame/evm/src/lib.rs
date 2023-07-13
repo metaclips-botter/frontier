@@ -59,6 +59,9 @@
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 
+mod firehose;
+use crate::firehose::Tracer;
+
 #[cfg(test)]
 mod mock;
 pub mod runner;
@@ -753,11 +756,7 @@ impl<T: Config> Pallet<T> {
 			return;
 		}
 
-		log::debug!(
-			target: "evm",
-			"FIREHOSE: create_account {:?}",
-			address,
-		);
+		firehose::BlockTracer::record_new_account(&address);
 
 		if !<AccountCodes<T>>::contains_key(address) {
 			let account_id = T::AddressMapping::into_account_id(address);

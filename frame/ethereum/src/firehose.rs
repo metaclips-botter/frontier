@@ -1,13 +1,32 @@
-use ethereum::{PartialHeader, TransactionAction, TransactionV2 as Transaction};
-use ethereum_types::{Address, H160, H256, U256};
+use ethereum::{PartialHeader, TransactionV2 as Transaction};
+use ethereum_types::{H160, U256};
 use fp_ethereum::TransactionData;
 use frame_support::dispatch::fmt;
 use scale_info::prelude::format;
 // use serde_json_core::ser;
 
-pub fn end_block(num: U256, size: u64, header: PartialHeader) {
-	print(
-		format!(
+pub struct BlockContext;
+
+pub trait BlockTrait {
+	// fn new() -> BlockContext;
+	// fn is_enabled(&self) -> bool;
+	// fn is_finalize_block_enabled(&self) -> bool;
+	// fn start_block(num: u64);
+	// fn transaction_tracer(&self, hash: eth::H256) -> TransactionTracer;
+	fn start_transaction(trx: &Transaction, from: &H160, to: Option<H160>);
+	// fn record_log_count(&mut self, count: u64);
+	// fn get_cumulative_gas_used(&mut self) -> u64;
+	// fn set_cumulative_gas_used(&mut self, gas_used: u64);
+	// fn end_transaction(&mut self, receipt: TransactionReceipt);
+	fn finalize_block(num: u64);
+	// fn end_block(&self, num: u64, size: u64, header:  Header, uncles: Vec<Header>);
+	fn end_block(num: U256, size: u64, header: PartialHeader);
+}
+
+impl BlockTrait for BlockContext {
+	fn end_block(num: U256, size: u64, header: PartialHeader) {
+		print(
+			format!(
 			"END_BLOCK {num} {size} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}", 
 			&header.parent_hash,
 			&header.beneficiary,
@@ -24,63 +43,15 @@ pub fn end_block(num: U256, size: u64, header: PartialHeader) {
 			&header.mix_hash,
 			&header.nonce,
 		)
-		.as_ref(),
-	);
-}
+			.as_ref(),
+		);
+	}
 
-// let tx = TransactionV0 {
-// 	nonce: 12.into(),
-// 	gas_price: 20_000_000_000_u64.into(),
-// 	gas_limit: 21000.into(),
-// 	action: TransactionAction::Call(
-// 		hex!("727fc6a68321b754475c668a6abfb6e9e71c169a").into(),
-// 	),
-// 	value: U256::from(10) * 1_000_000_000 * 1_000_000_000,
-// 	input: hex!("a9059cbb000000000213ed0f886efd100b67c7e4ec0a85a7d20dc971600000000000000000000015af1d78b58c4000").into(),
-// 	signature: TransactionSignature::new(38, hex!("be67e0a07db67da8d446f76add590e54b6e92cb6b8f9835aeb67540579a27717").into(), hex!("2d690516512020171c1ec870f6ff45398cc8609250326be89915fb538e7bd718").into()).unwrap(),
-// };
-
-// pub struct EIP2930TransactionMessage {
-// 	pub chain_id: u64,
-// 	pub nonce: U256,
-// 	pub gas_price: U256,
-// 	pub gas_limit: U256,
-// 	pub action: TransactionAction,
-// 	pub value: U256,
-// 	pub input: Bytes,
-// 	pub access_list: Vec<AccessListItem>,
-// }
-
-// pub struct EIP1559TransactionMessage {
-// 	pub chain_id: u64,
-// 	pub nonce: U256,
-// 	pub max_priority_fee_per_gas: U256,
-// 	pub max_fee_per_gas: U256,
-// 	pub gas_limit: U256,
-// 	pub action: TransactionAction,
-// 	pub value: U256,
-// 	pub input: Bytes,
-// 	pub access_list: Vec<AccessListItem>,
-// }
-
-// pub struct TransactionData {
-// 	pub action: TransactionAction,
-// 	pub input: Vec<u8>,
-// 	pub nonce: U256,
-// 	pub gas_limit: U256,
-// 	pub gas_price: Option<U256>,
-// 	pub max_fee_per_gas: Option<U256>,
-// 	pub max_priority_fee_per_gas: Option<U256>,
-// 	pub value: U256,
-// 	pub chain_id: Option<u64>,
-// 	pub access_list: Vec<(H160, Vec<H256>)>,
-// }
-
-pub fn start_transaction(trx: Transaction) {
-	let tx_data: TransactionData = (&trx).into();
-	print(format!("BEGIN_TRX {hash:x} {to} {value:x} {v:x} {r:x} {s:x} {gas_limit} {gas_price:x} {nonce} {data:x}",
-		hash = 0,
-		to = 0,
+	fn start_transaction(trx: &Transaction, from: &H160, to: Option<H160>) {
+		let tx_data: TransactionData = (trx).into();
+		print(format!("BEGIN_APPLY_TRX {hash:x} {to} {value:x} {v:x} {r:x} {s:x} {gas_limit} {gas_price:x} {nonce} {data:x}",
+		hash = trx.hash(),
+		to = to.unwrap_or(H160::zero()),
 		value = tx_data.value,
 		v = 0,
 		r = 0,
@@ -90,6 +61,13 @@ pub fn start_transaction(trx: Transaction) {
 		nonce = tx_data.nonce,
 		data = 0,
 	).as_ref());
+		print(format!("TRX_FROM {from:x}", from = from).as_ref());
+	}
+
+	fn finalize_block(num: u64) {
+		print(format!("FINALIZE_BLOCK {num}", num = num).as_ref())
+	}
+
 }
 
 pub fn print(input: &str) {
