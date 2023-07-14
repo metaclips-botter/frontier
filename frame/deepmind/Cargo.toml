@@ -7,9 +7,9 @@ edition = "2018"
 
 [dependencies]
 ethereum-types = { workspace = true }
-rustc-hex = "2.1.0"
-serde = "1.0"
-serde_json = "1.0"
+# rustc-hex = "2.1.0"
+# serde = "1.0"
+# serde_json = "1.0"
 ethereum = { workspace = true, features = ["with-codec"] }
 fp-ethereum = { workspace = true }
 frame-support = { workspace = true }
@@ -23,9 +23,9 @@ crate-type = ["cdylib", "rlib"]
 default = ["std"]
 std = [
 	"ethereum-types/std",
-	"rustc-hex/std",
-	"serde/std",
-	"serde_json/std",
+	# "rustc-hex/std",
+	# "serde/std",
+	# "serde_json/std",
 	"ethereum/std",
 	"scale-info/std",
 	# Substrate

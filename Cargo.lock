@@ -1529,10 +1529,7 @@ dependencies = [
  "ethereum-types",
  "fp-ethereum",
  "frame-support",
- "rustc-hex",
  "scale-info",
- "serde",
- "serde_json",
  "sp-std",
 ]
 

@@ -33,7 +33,7 @@ pallet-evm = { workspace = true }
 # serde_json = { package = "serde_json", version = "1.0.64", workspace = true }
 # serde-json-core = { workspace = true }
 # Deepmind tracer for Firehose
-deepmind = {  workspace = true, features = ["default"] }
+deepmind = {  workspace = true }
 
 [dev-dependencies]
 hex = "0.4.3"
