@@ -6,6 +6,7 @@ authors = ["dfuse Developers <developers@dfuse.io>"]
 edition = "2018"
 
 [dependencies]
+scale-codec = { package = "parity-scale-codec", workspace = true }
 ethereum-types = { workspace = true }
 # rustc-hex = "2.1.0"
 # serde = "1.0"
@@ -13,6 +14,9 @@ ethereum-types = { workspace = true }
 ethereum = { workspace = true, features = ["with-codec"] }
 fp-ethereum = { workspace = true }
 frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-runtime = { workspace = true }
+
 scale-info = { workspace = true }
 sp-std = { workspace = true }
 
@@ -22,14 +26,18 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = ["std"]
 std = [
+	# Ethereum
+	"ethereum/std",
 	"ethereum-types/std",
 	# "rustc-hex/std",
 	# "serde/std",
 	# "serde_json/std",
-	"ethereum/std",
-	"scale-info/std",
 	# Substrate
 	"frame-support/std",
+	"frame-system/std",
+	"scale-codec/std",
+	"scale-info/std",
+	"sp-runtime/std",
 	"sp-std/std",
 	# Frontier
 	"fp-ethereum/std",

@@ -4,9 +4,75 @@ use ethereum::{PartialHeader, TransactionV2 as Transaction};
 use ethereum_types::{H160, U256};
 use fp_ethereum::TransactionData;
 use frame_support::dispatch::fmt;
-use scale_info::prelude::format;
+use scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::{prelude::format, TypeInfo};
+use sp_runtime::RuntimeDebug;
 // use serde_json_core::ser;
+pub use pallet::*;
+use sp_std::prelude::*;
 
+#[derive(
+	Copy,
+	Clone,
+	Encode,
+	Decode,
+	Eq,
+	PartialEq,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo
+)]
+pub struct BlockContext {
+	context: u64, // Context,
+	is_enabled: bool,
+	is_finalize_block_enabled: bool,
+	cumulative_gas_used: u64,
+	log_index_at_block: u64,
+}
+
+impl Default for BlockContext {
+	fn default() -> Self {
+		Self {
+			context: 0,
+			is_enabled: false,
+			is_finalize_block_enabled: false,
+			cumulative_gas_used: 0,
+			log_index_at_block: 0,
+		}
+	}
+}
+
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
+	use frame_support::pallet_prelude::*;
+	use frame_system::pallet_prelude::*;
+
+	#[pallet::config]
+	pub trait Config: frame_system::Config {}
+
+	/// The lookup table for names.
+	#[pallet::storage]
+	#[pallet::getter(fn block_context)]
+	pub(super) type BlockContextStorage<T: Config> = StorageValue<_, BlockContext, ValueQuery>;
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
+		#[pallet::weight(1000)]
+		pub fn enable(origin: OriginFor<T>, enable: bool) -> DispatchResult {
+			ensure_signed(origin)?;
+
+			// set is_enabled in the BlockContext
+			BlockContextStorage::<T>::mutate(|bc| bc.is_enabled = enable);
+
+			Ok(())
+		}
+	}
+}
 pub trait Tracer: Send {
 	// fn is_enabled() -> bool { false }
 
@@ -56,8 +122,6 @@ impl Tracer for BlockTracer {
 		);
 	}
 }
-
-pub struct BlockContext;
 
 pub trait BlockTrait {
 	// fn new() -> BlockContext;
