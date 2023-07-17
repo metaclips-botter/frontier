@@ -73,6 +73,7 @@ pub mod pallet {
 		}
 	}
 }
+
 pub trait Tracer: Send {
 	// fn is_enabled() -> bool { false }
 
@@ -139,7 +140,7 @@ pub trait BlockTrait {
 	fn end_block(num: U256, size: u64, header: PartialHeader);
 }
 
-impl BlockTrait for BlockContext {
+impl<T> BlockTrait for Pallet<T> {
 	fn end_block(num: U256, size: u64, header: PartialHeader) {
 		print(
 			format!(

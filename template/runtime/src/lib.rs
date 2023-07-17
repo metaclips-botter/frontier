@@ -349,7 +349,10 @@ impl pallet_ethereum::Config for Runtime {
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
+	type Firehose = DeepMind;
 }
+
+impl deepmind::Config for Runtime {}
 
 parameter_types! {
 	pub BoundDivision: U256 = U256::from(1024);
@@ -409,6 +412,7 @@ construct_runtime!(
 		DynamicFee: pallet_dynamic_fee,
 		BaseFee: pallet_base_fee,
 		HotfixSufficients: pallet_hotfix_sufficients,
+		DeepMind: deepmind::{Pallet, Call, Storage},
 	}
 );
 

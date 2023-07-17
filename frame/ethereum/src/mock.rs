@@ -53,8 +53,11 @@ frame_support::construct_runtime! {
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		EVM: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 		Ethereum: crate::{Pallet, Call, Storage, Event, Origin},
+		DeepMind: deepmind::{Pallet, Call, Storage},
 	}
 }
+
+impl deepmind::Config for Test {}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -182,6 +185,7 @@ impl Config for Test {
 	type StateRoot = IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<30>;
+	type Firehose = DeepMind;
 }
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {

@@ -33,7 +33,7 @@ mod tests;
 
 // mod firehose;
 // use crate::firehose::BlockTrait;
-use deepmind::BlockTrait as Firehose;
+use deepmind::BlockTrait;
 
 pub use catch_exec_info::catch_exec_info;
 
@@ -203,6 +203,8 @@ pub mod pallet {
 		type PostLogContent: Get<PostLogContent>;
 		/// The maximum length of the extra data in the Executed event.
 		type ExtraDataLength: Get<u32>;
+		/// Firehose implementation pallet
+		type Firehose: BlockTrait;
 	}
 
 	#[pallet::hooks]
@@ -217,7 +219,8 @@ pub mod pallet {
 					frame_system::Pallet::<T>::block_number(),
 				)),
 			);
-			<deepmind::BlockContext as Firehose>::finalize_block(n.unique_saturated_into());
+			// <deepmind::BlockContext as Firehose>::finalize_block(n.unique_saturated_into());
+			T::Firehose::finalize_block(n.unique_saturated_into());
 			// move block hash pruning window by one block
 			let block_hash_count = T::BlockHashCount::get();
 			let to_remove = n
@@ -437,7 +440,7 @@ impl<T: Config> Pallet<T> {
 		};
 		let block = ethereum::Block::new(partial_header.clone(), transactions.clone(), ommers);
 
-		<deepmind::BlockContext as Firehose>::end_block(block_number, 0, partial_header.clone());
+		T::Firehose::end_block(block_number, 0, partial_header.clone());
 		CurrentBlock::<T>::put(block.clone());
 		CurrentReceipts::<T>::put(receipts.clone());
 		CurrentTransactionStatuses::<T>::put(statuses.clone());
@@ -543,7 +546,7 @@ impl<T: Config> Pallet<T> {
 		transaction: Transaction,
 	) -> DispatchResultWithPostInfo {
 		let (to, _, info) = Self::execute(source, &transaction, None)?;
-		<deepmind::BlockContext as Firehose>::start_transaction(&transaction, &source, to);
+		T::Firehose::start_transaction(&transaction, &source, to);
 
 		catch_exec_info::fill_exec_info(&info);
 
