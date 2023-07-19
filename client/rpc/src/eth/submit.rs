@@ -273,6 +273,13 @@ where
 			}
 		};
 
+		use scale_codec::Encode;
+		let encoded = extrinsic.encode();
+		println!("{:?}", encoded);
+		let encoded_hex = hex::encode(encoded);
+		println!("{:?}", encoded_hex);
+
+
 		self.pool
 			.submit_one(
 				&BlockId::Hash(block_hash),
