@@ -275,9 +275,9 @@ where
 
 		use scale_codec::Encode;
 		let encoded = extrinsic.encode();
-		println!("{:?}", encoded);
+		println!("Encoded ETH Extrinsic {:?}", encoded);
 		let encoded_hex = hex::encode(encoded);
-		println!("{:?}", encoded_hex);
+		println!("Hex Encoded ETH Extrinsic {:?}", encoded_hex);
 
 
 		self.pool
